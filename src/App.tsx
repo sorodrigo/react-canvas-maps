@@ -37,11 +37,10 @@ function useDrawFeatures(
   const paths = useRef<Array<Path2D>>([]);
   const requestId = useRef<number | null>(null);
 
-  function draw(e?: any) {
+  function init() {
     if (features && ref.current) {
       const ctx = ref.current.getContext('2d');
       if (ctx) {
-        ctx.clearRect(0, 0, width, height);
         // @ts-ignore
         ctx.mozImageSmoothingEnabled = false;
         ctx.imageSmoothingEnabled = false;
@@ -49,38 +48,60 @@ function useDrawFeatures(
         ctx.lineJoin = 'round';
         ctx.lineCap = 'round';
 
-        if (paths.current.length === 0) {
-          paths.current = features.flatMap((feature: any) => {
-            const d = path(feature);
-            if (d) {
-              return new Path2D(d);
-            }
-            return [];
-          });
-        }
+        paths.current = features.flatMap((feature: any) => {
+          const d = path(feature);
+          if (d) {
+            return new Path2D(d);
+          }
+          return [];
+        });
+        draw();
+      }
+    }
+  }
+
+  function drawEvent(ctx: CanvasRenderingContext2D, path: Path2D, event: MouseEvent) {
+    switch (event.type) {
+      case 'mousemove':
+        ctx.fillStyle = '#ee400b';
+        ctx.fill(path);
+        break;
+      case 'click':
+        ctx.fillStyle = '#521fee';
+        ctx.fill(path);
+        break;
+    }
+  }
+
+  function draw(event?: MouseEvent) {
+    if (features && ref.current) {
+      const ctx = ref.current.getContext('2d');
+      if (ctx) {
+        // reset canvas
+        ctx.clearRect(0, 0, width, height);
+        requestId.current = null;
 
         paths.current.forEach(path => {
           ctx.beginPath();
           ctx.lineWidth = 0.5;
-          if ((e && ctx.isPointInPath(path, e.clientX, e.clientY))) {
-            ctx.fillStyle = '#ee400b';
-            ctx.fill(path);
+          if (event && ctx.isPointInPath(path, event.clientX, event.clientY)) {
+            drawEvent(ctx, path, event);
           } else {
             ctx.strokeStyle = '#000';
             ctx.stroke(path);
           }
         });
       }
-      requestId.current = null;
     }
   }
 
   useEffect(() => {
-    draw();
+    init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [features]);
 
-  function update(e: any) {
+  function update(e: MouseEvent) {
+    // @ts-ignore
     e.persist();
     if (!requestId.current) {
       requestId.current = window.requestAnimationFrame(() => draw(e));
@@ -103,6 +124,7 @@ function App(props: Props) {
     <main className="container">
       <canvas
         onMouseMove={update}
+        onClick={update}
         ref={ref}
         className="canvas-root"
         width={props.width}
