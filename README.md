@@ -2,7 +2,7 @@
 Interactive maps using d3 and canvas
 
 ## prior art
-- [react-simple-maps](react-simple-maps.io/) by z-creative-labs
+- [react-simple-maps](https://react-simple-maps.io/) by z-creative-labs
 - [react-canvas-map-renderer](https://github.com/emonidi/react-canvas-map-renderer) by emonidi
 
 ## contributing
