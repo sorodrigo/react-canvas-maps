@@ -33,6 +33,7 @@ function App() {
 
   return (
     <main className="container">
+      <p className="notice">New update! Every polygon defines it's own events using React components API!</p>
       <MapCanvas height={600} width={900}>
         <MapFeatures features={features} />
       </MapCanvas>

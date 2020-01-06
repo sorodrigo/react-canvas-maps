@@ -72,14 +72,14 @@ function MapFeatures(props: Props) {
 
   const onMouseMove = (e: MouseEvent, feature: any) => {
     if (ctx) {
-      if (
-        ctx.isPointInPath(feature.path, e.clientX, e.clientY) &&
-        !hovered[feature.properties.ISO_A2]
-      ) {
+      const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
+      const localX = e.clientX - rect.x;
+      const localY = e.clientY - rect.y;
+      if (ctx.isPointInPath(feature.path, localX, localY) && !hovered[feature.properties.ISO_A2]) {
         ctx?.clearRect(0, 0, width, height);
         setHovered(_hovered => ({ ..._hovered, [feature.properties.ISO_A2]: true }));
       } else if (
-        !ctx.isPointInPath(feature.path, e.clientX, e.clientY) &&
+        !ctx.isPointInPath(feature.path, localX, localY) &&
         hovered[feature.properties.ISO_A2]
       ) {
         ctx?.clearRect(0, 0, width, height);
