@@ -1,13 +1,11 @@
 import { createContext } from 'react';
+import { geoEqualEarth } from 'd3';
+import { MapCanvasContextValue } from './types';
 
-export default createContext<{
-  ctx: CanvasRenderingContext2D | null;
-  width: number;
-  height: number;
-  registerHandler: (type: string, feature: any, handler: any) => void;
-}>({
+export default createContext<MapCanvasContextValue>({
   ctx: null,
   width: 0,
   height: 0,
-  registerHandler: () => {}
+  projection: geoEqualEarth().center([20, 0]),
+  registerHandler: () => () => false
 });

@@ -1,6 +1,8 @@
 import React, { ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
 import MapCanvasContext from './map-canvas.context';
+import { FeatureObject, MapCanvasContextValue, SUPPORTED_EVENTS, PathEventHandler } from './types';
+import { geoEqualEarth } from 'd3-geo';
 
 type Props = {
   width: number;
@@ -8,15 +10,19 @@ type Props = {
   children: ReactElement;
 };
 
-let callbackId: any = null;
+type EventHandlersMap = {
+  [type in SUPPORTED_EVENTS]: Map<FeatureObject, PathEventHandler>;
+};
 
 function MapCanvas(props: Props) {
   const { height, width, children } = props;
   const ref = useRef<HTMLCanvasElement>(null);
-  const eventHandlers = useRef<{ [type: string]: Map<any, any> }>({
-    mousemove: new Map()
+  const eventHandlers = useRef<EventHandlersMap>({
+    mousemove: new Map(),
+    click: new Map()
   });
-  const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
+  const callbackId = useRef<number | null>(null);
+  const [ctx, setCtx] = useState<MapCanvasContextValue['ctx']>(null);
 
   useEffect(() => {
     if (ref.current !== null) {
@@ -31,33 +37,42 @@ function MapCanvas(props: Props) {
         setCtx(_ctx);
       }
     }
+
+    return () => {
+      if (callbackId.current) {
+        window.cancelAnimationFrame(callbackId.current);
+      }
+    };
   }, []);
 
-  function handleEvent(e: any) {
-    // @ts-ignore
-    e.persist();
-    if (callbackId === null) {
-      callbackId = window.requestAnimationFrame(() => {
-        const registeredHandlers = eventHandlers.current[e.type];
-        unstable_batchedUpdates(() => {
-          registeredHandlers.forEach((handler, feature) => handler(e, feature));
-        });
-        callbackId = null;
-      });
-    }
-  }
-
-  function registerHandler(type: string, feature: any, handler: any) {
+  function registerHandler(
+    type: SUPPORTED_EVENTS,
+    feature: FeatureObject,
+    handler: PathEventHandler
+  ) {
     eventHandlers.current[type].set(feature, handler);
 
     return () => eventHandlers.current[type].delete(feature);
   }
 
-  const contextValue = useMemo(() => ({ ctx, width, height, registerHandler }), [
-    ctx,
-    height,
-    width
-  ]);
+  const contextValue = useMemo(
+    () => ({ ctx, width, height, registerHandler, projection: geoEqualEarth().center([20, 0]) }),
+    [ctx, height, width]
+  );
+
+  function handleEvent(e: React.MouseEvent<HTMLCanvasElement>) {
+    e.persist();
+    const eventType = e.type as SUPPORTED_EVENTS;
+    if (callbackId.current === null && Object.values(SUPPORTED_EVENTS).includes(eventType)) {
+      callbackId.current = window.requestAnimationFrame(() => {
+        const registeredHandlers = eventHandlers.current[eventType];
+        unstable_batchedUpdates(() => {
+          registeredHandlers.forEach((handler, feature) => handler(e, feature, contextValue));
+        });
+        callbackId.current = null;
+      });
+    }
+  }
 
   return (
     <canvas
