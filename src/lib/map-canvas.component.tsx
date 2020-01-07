@@ -8,6 +8,7 @@ type Props = {
   width: number;
   height: number;
   children: ReactElement;
+  style?: React.CSSProperties;
 };
 
 type EventHandlersMap = {
@@ -15,7 +16,7 @@ type EventHandlersMap = {
 };
 
 function MapCanvas(props: Props) {
-  const { height, width, children } = props;
+  const { height, width, children, style } = props;
   const ref = useRef<HTMLCanvasElement>(null);
   const eventHandlers = useRef<EventHandlersMap>({
     mousemove: new Map(),
@@ -77,11 +78,12 @@ function MapCanvas(props: Props) {
   return (
     <canvas
       ref={ref}
-      className="canvas-root"
+      style={style}
       width={width}
       height={height}
-      onMouseMove={handleEvent}
+      className="canvas-root"
       onClick={handleEvent}
+      onMouseMove={handleEvent}
     >
       <MapCanvasContext.Provider value={contextValue}>{children}</MapCanvasContext.Provider>
     </canvas>

@@ -99,7 +99,11 @@ function App() {
       <p className="notice">
         New update! Every polygon defines its own events using React components API!
       </p>
-      <MapCanvas height={600} width={900}>
+      <MapCanvas
+        height={600}
+        width={900}
+        style={{ cursor: Object.values(hovered).includes(true) ? 'pointer' : 'default' }}
+      >
         <MapFeatures features={features}>
           {objects =>
             objects.map(obj => (
