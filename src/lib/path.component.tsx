@@ -6,22 +6,47 @@ type Props = {
   draw: DrawInstructions;
   feature: FeatureObject;
   onMouseMove?: PathEventHandler;
+  onClick?: PathEventHandler;
 };
+
+function sortCanvasCtxProps(a: [string, string], b: [string, string]) {
+  if (a[0] === 'stroke') {
+    if (b[0] === 'fill') {
+      return 0;
+    }
+    return 1;
+  }
+  if (a[0] === 'fill') {
+    if (b[0] === 'stroke') {
+      return 0;
+    }
+    return 1;
+  }
+  if (a[0] < b[0]) {
+    return -1;
+  }
+  if (a[0] > b[0]) {
+    return 1;
+  }
+  return 0;
+}
 
 function useDrawPath(path: Path2D, draw: DrawInstructions) {
   const { ctx } = useContext(MapCanvasContext);
   useLayoutEffect(() => {
     if (ctx) {
       ctx.beginPath();
-      Object.entries(draw).forEach(([prop, value]) => {
-        if (!['stroke', 'fill'].includes(prop)) {
-          // @ts-ignore
-          ctx[prop] = value;
-        } else {
-          // @ts-ignore
-          ctx[prop].call(ctx, path);
-        }
-      });
+      Object.entries(draw)
+        .sort(sortCanvasCtxProps)
+        .forEach(([prop, value]) => {
+          if (!['stroke', 'fill'].includes(prop)) {
+            // @ts-ignore
+            ctx[prop] = value;
+          } else {
+            // @ts-ignore
+            ctx[prop].call(ctx, path);
+          }
+        });
       ctx.closePath();
     }
   });

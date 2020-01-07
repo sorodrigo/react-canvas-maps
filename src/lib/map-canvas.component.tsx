@@ -81,6 +81,7 @@ function MapCanvas(props: Props) {
       width={width}
       height={height}
       onMouseMove={handleEvent}
+      onClick={handleEvent}
     >
       <MapCanvasContext.Provider value={contextValue}>{children}</MapCanvasContext.Provider>
     </canvas>
